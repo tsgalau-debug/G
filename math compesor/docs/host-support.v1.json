@@ -1,0 +1,144 @@
+{
+  "schema": "burn-research.host-support.v1",
+  "artifact_target": "wasm-bindgen-web",
+  "support_semantics": {
+    "supported_means": "consumer_path_verified_on_recorded_matrix",
+    "support_does_not_imply_runtime_or_toolchain_is_bundled": true,
+    "host_ranking": "none",
+    "artifact_target_semantics": "generated_wasm_packaging_target_not_host_priority",
+    "communication_contract": "docs/wasm-host-communication.md",
+    "packaged_communication_contract": "wasm-host-communication.md"
+  },
+  "execution_core": {
+    "implementation_language": "rust",
+    "role": "reference_machine",
+    "native_package": "burn-research",
+    "wasm_surface_contract": "docs/wasm-surface.v1.json"
+  },
+  "verified_hosts": {
+    "node": {
+      "status": "supported",
+      "role": "verified_wasm_host_adapter",
+      "module_system": "esm",
+      "adapter": "node.mjs",
+      "interactive_runner": "interactive_multi_input_ingress.mjs",
+      "execution_trace_contract": "multi-input-execution-trace.v1.json",
+      "baseline_candidate_verification_contract": "baseline-candidate-verification.v1.json",
+      "transactional_graph_mutation_contract": "transactional-graph-mutation.v1.json",
+      "checkpoint_branch_state_diff_contract": "transactional-graph-checkpoint-branch.v1.json",
+      "branch_promotion_lineage_module": "branch_promotion_lineage.mjs",
+      "branch_promotion_lineage_contract": "host-branch-promotion-lineage.v1.json",
+      "operation_registry_module": "operation_contract_registry.mjs",
+      "operation_registry_contract": "host-operation-contract-registry.v1.json",
+      "operation_registry_source_contracts": [
+        "agent-layer-catalog.v1.json",
+        "agent-layout-contracts.v1.json",
+        "agent-input-port.v1.json",
+        "agent-fault-contract.v1.json",
+        "multi-input-graph-plan.v1.json",
+        "multi-input-plan-explain.v1.json"
+      ],
+      "operation_registry_scope": "constructible graph operation type pool and nonexecuting declarative plan resolution; live LayerRegistry instance inventory remains deferred",
+      "ingress_provenance_verifier": "ingress_provenance.mjs",
+      "ingress_provenance_contract": "ingress-provenance.v1.json",
+      "state_bound_ingress_provenance_contract": "ingress-provenance.v2.json",
+      "ingress_replay_ledger_contract": "ingress-replay-ledger.v1.json",
+      "ingress_replay_ledger_initializer": "init_ingress_replay_ledger.mjs",
+      "host_execution_receipt_contract": "host-execution-receipt.v2.json",
+      "host_checkpoint_restore_contract": "host-checkpoint-restore.v1.json",
+      "legacy_host_execution_receipt_contract": "host-execution-receipt.v1.json",
+      "state_checkpoint_export": "explicit_durable_runner_startup_opt_in_and_current_signed_inputs",
+      "host_state_handoff_contract": "host-state-handoff.v1.json",
+      "wasm_surface_contract": "wasm-surface.v1.json",
+      "runtime_surface_contract": "runtime-surface.v1.json",
+      "wasm_binding_projection": "wasm-surface.bindings.actual.json",
+      "runtime_surface_actual": "wasm-surface.actual.json",
+      "ingress_replay_ledger": "optional_host_subject_bound_file_across_restarts",
+      "ingress_provenance_scope": "optional_host_enforced_ed25519_policy;direct_wasm_unverified",
+      "interactive_protocol": "JSON Lines with one response per request",
+      "types": "node.d.mts",
+      "initialization": "filesystem_read_plus_initSync",
+      "communication": "node_adapter_to_generated_wasm_bindgen_surface",
+      "requires_external_runtime": "node",
+      "runtime_bundled": false,
+      "local_file_package": true,
+      "ci_smoke_required": true
+    }
+  },
+  "native_packages": {
+    "rust": {
+      "status": "supported",
+      "role": "native_package_consumer",
+      "package": "burn-research",
+      "crate_type": "rlib",
+      "communication": "public_rust_package_api",
+      "requires_wasm": false,
+      "toolchain_bundled": false,
+      "consumer_proof": "scripts/audit_rust_package.py",
+      "orchestration": "host_owned",
+      "ci_smoke_required": true,
+      "stable_cross_language_abi": false,
+      "runtime_resolution_evidence": {
+        "contract": "burn-research.runtime-resolution-evidence.v1",
+        "ownership": "native host-side bounded inbox",
+        "wasm_role": "capability discovery only; ResolutionEvidenceInbox is not WASM-owned",
+        "canonical_constructor": "ResolutionEvidenceInbox::from_authorized",
+        "lower_level_escape_hatch": "ResolutionEvidenceInbox::new with an already-validated RuntimeSubjectProjection"
+      }
+    }
+  },
+  "verified_cross_language_consumers": {
+    "python": {
+      "status": "supported",
+      "role": "verified_external_host",
+      "package": "burn-research-ffi",
+      "public_namespace": "burn_research_ffi.host",
+      "host_api": "burn-research.python-host.v1",
+      "typed": true,
+      "raw_ffi_primary": false,
+      "raw_ffi_escape_hatch": "burn_research_ffi.ffi/lib",
+      "distribution": "wheel",
+      "binding": "cffi",
+      "abi": "burn-research.ffi.v1",
+      "communication": "cffi_over_burn-research.ffi.v1",
+      "requires_wasm": false,
+      "requires_external_runtime": "cpython",
+      "runtime_bundled": false,
+      "orchestration": "host_owned",
+      "consumer_proof": "scripts/audit_python_wheel.py",
+      "ci_workflow": "Python Wheel Proof",
+      "verified_matrix": {
+        "os": [
+          "linux"
+        ],
+        "architecture": [
+          "x86_64"
+        ],
+        "python_implementation": "cpython",
+        "python_versions": [
+          "3.12"
+        ]
+      },
+      "ci_smoke_required": true
+    }
+  },
+  "generated_but_not_host_verified": {
+    "browser": {
+      "role": "generated_wasm_entry",
+      "host_verified": false,
+      "entry": "burn_research.js",
+      "initialization": "wasm-bindgen_default_async"
+    }
+  },
+  "cross_language_abi": {
+    "status": "supported",
+    "abi": "burn-research.ffi.v1",
+    "stability": "versioned_experimental_v1",
+    "stable_abi_published": false,
+    "consumer_ranking": "none",
+    "verified_consumers": [
+      "python"
+    ]
+  },
+  "planned_hosts": []
+}

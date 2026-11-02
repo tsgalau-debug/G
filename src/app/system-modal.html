@@ -1,0 +1,578 @@
+@if (activeModal() !== 'none') {
+<div
+  class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+  (click)="closeModal()"
+  tabindex="-1"
+>
+  <div
+    class="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl w-full flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 transition-all"
+    [class.max-w-5xl]="activeModal() === 'graph' || activeModal() === 'timeline' || activeModal() === 'homology'"
+    [class.max-w-3xl]="activeModal() === 'factions'"
+    [class.max-w-2xl]="activeModal() === 'history' || activeModal() === 'lore'"
+    [class.max-w-xl]="activeModal() === 'quests'"
+    [class.max-w-md]="activeModal() === 'settings'"
+    (click)="$event.stopPropagation()"
+  >
+    <div
+      class="p-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-950/50"
+    >
+      <h3
+        class="text-sm font-bold text-white uppercase tracking-widest font-mono"
+      >
+        {{ activeModal() }} Panel
+      </h3>
+      <button (click)="closeModal()" aria-label="Tutup panel" class="text-zinc-500 hover:text-white">
+        <mat-icon class="text-[20px] w-[20px] h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    @if (activeModal() === 'settings') {
+    <div class="px-6 py-4 flex flex-col gap-4 max-h-[75vh] overflow-y-auto">
+      <div>
+        <label
+          for="ai-model-select"
+          class="text-[11px] uppercase tracking-widest font-bold text-zinc-400 mb-2 block"
+          >Model AI (LLM Engine)</label
+        >
+        <select
+          id="ai-model-select"
+          [value]="gameState.aiModel"
+          (change)="gameState.setAiModel($any($event.target).value)"
+          class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 text-sm focus:outline-none focus:border-emerald-500 font-mono tracking-tight appearance-none"
+        >
+          <option value="gemini-3.5-flash-lite">
+            Gemini 3.5 Flash-Lite (15 RPM · 500 RPD — Default Hemat Kuota)
+          </option>
+          <option value="gemini-3.1-flash-lite">
+            Gemini 3.1 Flash-Lite (15 RPM · 500 RPD — Alternatif Cepat)
+          </option>
+          <option value="gemini-3.8-flash">
+            Gemini 3.8 Flash (5 RPM · 20 RPD — Kualitas Tinggi)
+          </option>
+          <option value="gemini-3.1-pro-preview">
+            Gemini 3.1 Pro (Penalaran Kompleks)
+          </option>
+          <option value="gemini-flash-latest">
+            Gemini Flash Latest (Otomatis Terkini)
+          </option>
+        </select>
+        <p class="text-[10px] text-zinc-400 mt-2 leading-relaxed">
+          Gemini 3.5 Flash-Lite & 3.1 Flash-Lite memiliki kuota harian besar (500 RPD / 15 RPM). Gunakan 3.8 Flash (20 RPD) secara bijak untuk adegan krusial.
+        </p>
+      </div>
+    </div>
+    } @else if (activeModal() === 'history') {
+    <div class="px-6 py-4 overflow-y-auto max-h-[60vh] flex flex-col gap-4">
+      <div>
+        <h4
+          class="text-[11px] uppercase tracking-widest font-bold text-emerald-500 mb-3 border-b border-zinc-800 pb-2"
+        >
+          Active Lore (RAG Context)
+        </h4>
+        <div class="space-y-2 mb-4">
+          @for (lore of gameState.activeLoreKeys; track lore) {
+          <span
+            class="inline-block px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-300 font-mono mr-2"
+            >{{lore}}</span
+          >
+          } @if (!gameState.activeLoreKeys || gameState.activeLoreKeys.length === 0) {
+          <p class="text-[11px] text-zinc-500 italic">
+            Tidak ada lore yang dimuat untuk state ini.
+          </p>
+          }
+        </div>
+
+        <h4
+          class="text-[11px] uppercase tracking-widest font-bold text-emerald-500 mb-3 border-b border-zinc-800 pb-2"
+        >
+          Knowledge Graph (Persisten)
+        </h4>
+        <div class="space-y-3">
+          @for (entity of getGraphKeys(); track entity) {
+          <div
+            class="bg-zinc-950 rounded border border-zinc-800 p-2 text-left"
+          >
+            <span class="text-[12px] font-bold text-amber-500 block mb-1"
+              >[{{entity}}]</span
+            >
+            <ul class="list-disc pl-4 space-y-1">
+              @for (fact of gameState.knowledgeGraph[entity]; track fact) {
+              <li class="text-[11px] text-zinc-300 leading-tight">
+                {{fact}}
+              </li>
+              }
+            </ul>
+          </div>
+          } @if (getGraphKeys().length === 0) {
+          <p class="text-[11px] text-zinc-500 italic">
+            Belum ada fakta yang tercatat.
+          </p>
+          }
+        </div>
+      </div>
+    </div>
+    } @else if (activeModal() === 'lore') {
+    <div class="px-6 py-4 overflow-y-auto max-h-[60vh] flex flex-col gap-4">
+      <div>
+        <div
+          class="flex justify-between items-center mb-3 border-b border-zinc-800 pb-2"
+        >
+          <h4
+            class="text-[11px] uppercase tracking-widest font-bold text-fuchsia-500"
+          >
+            Active Context ({{ loreEngine.retrievalCount() }} entries)
+          </h4>
+          <span class="text-[10px] text-zinc-500 font-mono"
+            >Max Rel: {{ loreEngine.topRelevance() | number:'1.2-2' }}</span
+          >
+        </div>
+
+        <div
+          class="w-full bg-zinc-900 rounded-full h-1.5 mb-4 overflow-hidden"
+        >
+          <div
+            class="bg-fuchsia-500 h-1.5 rounded-full transition-all duration-300"
+            [style.width.%]="(loreEngine.topRelevance() * 100) > 100 ? 100 : (loreEngine.topRelevance() * 100)"
+          ></div>
+        </div>
+
+        <div class="space-y-3">
+          @for (lore of loreEngine.lastRetrieval(); track lore.entry.key) {
+          <div
+            class="bg-zinc-950 rounded border border-zinc-800 p-3 text-left transition-colors"
+            [class.border-fuchsia-900]="lore.relevanceScore > 0.5"
+            [class.bg-fuchsia-950]="lore.relevanceScore > 0.8"
+            [class.bg-opacity-20]="lore.relevanceScore > 0.8"
+          >
+            <div class="flex justify-between items-start mb-1 gap-2">
+              <span
+                class="inline-block px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 rounded text-[9px] text-zinc-400 font-bold uppercase tracking-wider shrink-0"
+                >{{ lore.reason }}</span
+              >
+              <span
+                class="text-[10px] font-mono whitespace-nowrap"
+                [class.text-fuchsia-400]="lore.relevanceScore > 0.5"
+                [class.text-zinc-500]="lore.relevanceScore <= 0.5"
+              >
+                Rel: {{ lore.relevanceScore | number:'1.2-2' }}
+              </span>
+            </div>
+            <p
+              class="text-[11px] text-zinc-300 leading-relaxed mt-2 text-wrap"
+            >
+              {{ lore.entry.content }}
+            </p>
+          </div>
+          } @if (loreEngine.retrievalCount() === 0) {
+          <p class="text-[11px] text-zinc-500 italic text-center py-4">
+            Belum ada konteks lore yang di-retrieve saat ini.<br />Generasi
+            narasi belum ditrigger.
+          </p>
+          }
+        </div>
+      </div>
+    </div>
+    } @else if (activeModal() === 'factions') {
+    <div class="px-6 py-4 overflow-y-auto max-h-[65vh] flex flex-col gap-6">
+      
+      <!-- Action Feedback Notification -->
+      @if (actionFeedback()) {
+      <div class="bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-[11px] px-3.5 py-2 rounded-xl shadow-lg flex items-center gap-2">
+        <mat-icon class="text-emerald-400 text-[16px] w-[16px] h-[16px]">check_circle</mat-icon>
+        <span class="font-medium">{{ actionFeedback() }}</span>
+      </div>
+      }
+
+      <!-- 1. FACTIONS SECTION -->
+      <div>
+        <div class="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-amber-500 text-[18px] w-[18px] h-[18px]">flag</mat-icon>
+            <h4 class="text-[11px] uppercase tracking-widest font-bold text-amber-500">
+              Daftar Faksi & Hubungan Diplomatik
+            </h4>
+          </div>
+          <span class="text-[10px] font-mono text-zinc-500">
+            {{ getFactionKeys().length }} Faksi Terdata
+          </span>
+        </div>
+
+        <div class="space-y-4 mb-6">
+          @for (fname of getFactionKeys(); track fname) {
+          <div class="bg-zinc-950 rounded-xl border border-zinc-800 p-4 text-left transition-all hover:border-zinc-700 shadow-sm space-y-3">
+            
+            <div class="flex flex-wrap justify-between items-start gap-2">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[14px] font-bold text-zinc-100">{{gameState.factions[fname]!.name}}</span>
+                  
+                  <!-- Reputation Tier Badge -->
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider" [class]="getFactionTier(gameState.factions[fname]!.reputation).badgeClass">
+                    {{ getFactionTier(gameState.factions[fname]!.reputation).label }}
+                  </span>
+
+                  <!-- Recent Delta Badge -->
+                  @if (getFactionDelta(fname)) {
+                  <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border"
+                    [class.text-emerald-400]="getFactionDelta(fname)! > 0"
+                    [class.bg-emerald-500/10]="getFactionDelta(fname)! > 0"
+                    [class.border-emerald-500/20]="getFactionDelta(fname)! > 0"
+                    [class.text-red-400]="getFactionDelta(fname)! < 0"
+                    [class.bg-red-500/10]="getFactionDelta(fname)! < 0"
+                    [class.border-red-500/20]="getFactionDelta(fname)! < 0">
+                    {{ getFactionDelta(fname)! > 0 ? '+' : '' }}{{ getFactionDelta(fname) }} Rep
+                  </span>
+                  }
+                </div>
+
+                @if (gameState.factions[fname]!.leader) {
+                <p class="text-[10px] text-zinc-400 mt-1 flex items-center gap-1">
+                  <mat-icon class="text-[12px] w-[12px] h-[12px] text-zinc-500">shield</mat-icon>
+                  <span class="text-zinc-500 font-semibold">Pemimpin:</span>
+                  <span class="text-zinc-300">{{gameState.factions[fname]!.leader}}</span>
+                </p>
+                }
+              </div>
+
+              <!-- Numerical Reputation Score -->
+              <div class="text-right">
+                <span class="text-[12px] font-mono font-bold" [class]="getFactionTier(gameState.factions[fname]!.reputation).textColor">
+                  {{ gameState.factions[fname]!.reputation > 0 ? '+' : '' }}{{ gameState.factions[fname]!.reputation }} Rep
+                </span>
+                <span class="block text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Skala -100 ke +100</span>
+              </div>
+            </div>
+
+            <!-- Reputation Visual Bar (Normalized -100 to +100) -->
+            <div class="space-y-1">
+              <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800 relative">
+                <!-- Center divider at 50% (0 reputation) -->
+                <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-zinc-700 z-10"></div>
+                <div class="h-full transition-all duration-500" 
+                     [class]="getFactionTier(gameState.factions[fname]!.reputation).barColor" 
+                     [style.width]="((gameState.factions[fname]!.reputation + 100) / 2) + '%'"></div>
+              </div>
+              <div class="flex justify-between text-[9px] text-zinc-600 font-mono">
+                <span>Musuh (-100)</span>
+                <span>Netral (0)</span>
+                <span>Sekutu (+100)</span>
+              </div>
+            </div>
+
+            <!-- Faction Description -->
+            <p class="text-[11px] text-zinc-400 leading-relaxed">
+              {{gameState.factions[fname]!.description}}
+            </p>
+
+            <!-- Faction Members (NPCs) -->
+            @if (getFactionMembers(fname).length > 0) {
+            <div class="pt-1 border-t border-zinc-900 flex flex-wrap items-center gap-1.5">
+              <span class="text-[10px] text-zinc-500 font-medium mr-1">Tokoh Terkait:</span>
+              @for (member of getFactionMembers(fname); track member.key) {
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-300">
+                <mat-icon class="text-[11px] w-[11px] h-[11px] text-zinc-500">person</mat-icon>
+                {{ member.name }}
+              </span>
+              }
+            </div>
+            }
+
+            <!-- Quick Story Interaction Buttons -->
+            <div class="flex flex-wrap justify-end gap-2 pt-1 border-t border-zinc-900">
+              <button
+                type="button"
+                (click)="interactWithFaction(fname, 'support')"
+                class="px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-emerald-400 hover:text-emerald-300 border border-emerald-900/40 text-[10px] font-medium flex items-center gap-1 transition-colors">
+                <mat-icon class="text-[12px] w-[12px] h-[12px]">handshake</mat-icon>
+                Dukung di Cerita
+              </button>
+              <button
+                type="button"
+                (click)="interactWithFaction(fname, 'investigate')"
+                class="px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-amber-900/40 text-[10px] font-medium flex items-center gap-1 transition-colors">
+                <mat-icon class="text-[12px] w-[12px] h-[12px]">search</mat-icon>
+                Selidiki Rahasia
+              </button>
+            </div>
+
+          </div>
+          } @if (getFactionKeys().length === 0) {
+          <p class="text-[11px] text-zinc-500 italic py-2">
+            Belum ada faksi yang tercatat.
+          </p>
+          }
+        </div>
+
+        <!-- 2. CHARACTERS (NPC) RELATION SECTION -->
+        <div class="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2 pt-2">
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-blue-400 text-[18px] w-[18px] h-[18px]">group</mat-icon>
+            <h4 class="text-[11px] uppercase tracking-widest font-bold text-blue-400">
+              Karakter & Hubungan Relasi (NPC)
+            </h4>
+          </div>
+          <div class="flex items-center gap-1 bg-zinc-950 p-0.5 rounded-lg border border-zinc-800 text-[10px]">
+            <button
+              type="button"
+              (click)="setNpcFilter('all')"
+              class="px-2 py-0.5 rounded font-mono transition-colors"
+              [class.bg-blue-600]="npcFilter === 'all'"
+              [class.text-white]="npcFilter === 'all'"
+              [class.text-zinc-400]="npcFilter !== 'all'"
+            >Semua</button>
+            <button
+              type="button"
+              (click)="setNpcFilter('local')"
+              class="px-2 py-0.5 rounded font-mono transition-colors"
+              [class.bg-blue-600]="npcFilter === 'local'"
+              [class.text-white]="npcFilter === 'local'"
+              [class.text-zinc-400]="npcFilter !== 'local'"
+            >Di Lokasi</button>
+            <button
+              type="button"
+              (click)="setNpcFilter('rolling')"
+              class="px-2 py-0.5 rounded font-mono transition-colors"
+              [class.bg-blue-600]="npcFilter === 'rolling'"
+              [class.text-white]="npcFilter === 'rolling'"
+              [class.text-zinc-400]="npcFilter !== 'rolling'"
+            >Aktif AI</button>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          @for (npc of getNpcKeys(); track npc) {
+          <div class="bg-zinc-950 rounded-xl border border-zinc-800 p-3.5 text-left space-y-2.5 transition-all hover:border-zinc-700">
+            
+            <div class="flex flex-wrap justify-between items-start gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-400 shrink-0">
+                  <mat-icon class="text-[18px] w-[18px] h-[18px]">person</mat-icon>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[13px] font-bold text-zinc-100">{{getCleanNpcName(npc)}}</span>
+                    @if (gameState.npcStates[npc]?.faksi) {
+                    <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                      {{ gameState.npcStates[npc]?.faksi }}
+                    </span>
+                    }
+                  </div>
+                  <span class="text-[10px] text-zinc-400 font-mono flex items-center gap-1 mt-0.5">
+                    <mat-icon class="text-[11px] w-[11px] h-[11px] text-zinc-500">location_on</mat-icon>
+                    {{gameState.npcStates[npc]?.lokasi || gameState.npcStates[npc]?.location || 'Lokasi tidak diketahui'}}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Trust Tier & Score -->
+              @let trust = getNpcTrustInfo(npc);
+              <div class="flex flex-col items-end">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider" [class]="trust.badgeClass">
+                    {{ trust.tier }}
+                  </span>
+                  <span class="text-[12px] font-mono font-bold text-amber-400">
+                    {{ trust.value }}/100
+                  </span>
+                </div>
+                @if (trust.delta) {
+                <span class="text-[9px] font-mono font-bold mt-0.5"
+                  [class.text-emerald-400]="trust.delta > 0"
+                  [class.text-red-400]="trust.delta < 0">
+                  {{ trust.delta > 0 ? '+' : '' }}{{ trust.delta }} Trust
+                </span>
+                }
+              </div>
+            </div>
+
+            <!-- Trust Progress Bar -->
+            @let trustBar = getNpcTrustInfo(npc);
+            <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden border border-zinc-800">
+              <div class="h-full transition-all duration-500" [class]="trustBar.barColor" [style.width]="trustBar.value + '%'"></div>
+            </div>
+
+            <!-- NPC Status Details -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-1 text-[10px] text-zinc-400 border-t border-zinc-900">
+              <div>
+                <strong class="text-zinc-500">Status:</strong>
+                <span class="text-zinc-300 ml-1">{{gameState.npcStates[npc]?.status || 'Normal'}}</span>
+              </div>
+              <div>
+                <strong class="text-zinc-500">Mood:</strong>
+                <span class="text-zinc-300 ml-1 italic">{{gameState.npcStates[npc]?.mood || 'Netral'}}</span>
+              </div>
+              <div class="sm:truncate">
+                <strong class="text-zinc-500">Aktivitas:</strong>
+                <span class="text-zinc-300 ml-1">{{gameState.npcStates[npc]?.aktivitas || gameState.npcStates[npc]?.activity || 'Menunggu'}}</span>
+              </div>
+            </div>
+
+            <!-- Quick Story Interaction Buttons -->
+            <div class="flex justify-end gap-2 pt-1 border-t border-zinc-900">
+              <button
+                type="button"
+                (click)="interactWithNpc(npc, 'talk')"
+                class="px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-[10px] flex items-center gap-1 transition-colors">
+                <mat-icon class="text-[12px] w-[12px] h-[12px]">chat</mat-icon>
+                Ajak Bicara
+              </button>
+              <button
+                type="button"
+                (click)="interactWithNpc(npc, 'collaborate')"
+                class="px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-blue-400 hover:text-blue-300 border border-blue-900/40 text-[10px] flex items-center gap-1 transition-colors">
+                <mat-icon class="text-[12px] w-[12px] h-[12px]">handshake</mat-icon>
+                Ajak Kerja Sama
+              </button>
+            </div>
+
+          </div>
+          } @if (getNpcKeys().length === 0) {
+          <div class="py-6 text-center border border-zinc-800 border-dashed rounded-xl bg-zinc-950/40">
+            <mat-icon class="text-zinc-600 text-2xl mb-1">person_off</mat-icon>
+            <p class="text-[11px] text-zinc-400 font-medium">
+              Tidak ada karakter di filter ini.
+            </p>
+            <p class="text-[10px] text-zinc-500 mt-0.5">
+              Pilih filter "Semua" untuk melihat seluruh karakter yang ada di dunia.
+            </p>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    } @else if (activeModal() === 'graph') {
+    <div class="h-[75vh] w-full">
+      <app-knowledge-graph></app-knowledge-graph>
+    </div>
+    } @else if (activeModal() === 'quests') {
+    <div class="p-6">
+      <!-- Combat Banner -->
+      @if (gameState.combat && gameState.combat.inCombat) {
+      <div
+        class="mb-6 border border-red-900/50 bg-red-950/20 rounded-xl p-4 relative overflow-hidden"
+      >
+        <div class="absolute top-0 right-0 p-2 opacity-10">
+          <mat-icon class="text-6xl text-red-500">warning</mat-icon>
+        </div>
+        <h4
+          class="text-red-500 font-bold uppercase tracking-widest text-xs mb-3 flex items-center gap-2"
+        >
+          <mat-icon class="text-[16px] w-[16px] h-[16px]">security</mat-icon>
+          Combat Aktif
+        </h4>
+        <p class="text-[11px] text-zinc-400 mb-2">
+          Advantage:
+          <span class="capitalize text-zinc-200"
+            >{{ gameState.combat.advantage }}</span
+          >
+        </p>
+        <div class="space-y-2">
+          @for (enemy of gameState.combat.enemies; track enemy.name) {
+          <div
+            class="flex items-center justify-between bg-zinc-900/80 p-2 rounded border border-red-900/30"
+          >
+            <span class="text-[12px] font-bold text-red-100"
+              >{{ enemy.name }}</span
+            >
+            <div class="text-right">
+              <span class="block text-[10px] text-red-400 font-mono"
+                >HP: {{ enemy.hp }}</span
+              >
+              <span class="block text-[10px] text-zinc-500"
+                >{{ enemy.status }}</span
+              >
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+      }
+
+      <!-- Quests -->
+      <h4
+        class="text-zinc-500 font-bold uppercase tracking-widest text-xs mb-4"
+      >
+        Misi & Objektif
+      </h4>
+      <div class="space-y-4">
+        @for (q of getQuests(); track q.id) {
+        <div class="border border-zinc-800 bg-zinc-950 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h5 class="text-[13px] font-bold text-zinc-200">
+              {{ q.title }}
+            </h5>
+            <span
+              class="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold border"
+              [class.bg-emerald-500/20]="q.status === 'completed'"
+              [class.text-emerald-400]="q.status === 'completed'"
+              [class.border-emerald-500/30]="q.status === 'completed'"
+              [class.bg-red-500/20]="q.status === 'failed'"
+              [class.text-red-400]="q.status === 'failed'"
+              [class.border-red-500/30]="q.status === 'failed'"
+              [class.bg-orange-500/20]="q.status === 'active'"
+              [class.text-orange-400]="q.status === 'active'"
+              [class.border-orange-500/30]="q.status === 'active'"
+            >
+              {{ q.status }}
+            </span>
+          </div>
+          <p class="text-[11px] text-zinc-400 leading-relaxed mb-4">
+            {{ q.description }}
+          </p>
+
+          @if (q.objectives && q.objectives.length > 0) {
+          <div class="space-y-1.5">
+            @for (obj of q.objectives; track obj) {
+            <div class="flex items-start gap-2 text-[11px]">
+              <mat-icon
+                class="text-[14px] w-[14px] h-[14px] mt-0.5"
+                [class.text-emerald-500]="q.status === 'completed'"
+                [class.text-zinc-600]="q.status !== 'completed'"
+              >
+                {{ q.status === 'completed' ? 'check_circle' :
+                'radio_button_unchecked' }}
+              </mat-icon>
+              <span class="text-zinc-300">{{ obj }}</span>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        } @empty {
+        <p class="text-center text-[12px] text-zinc-600 py-8 italic">
+          Belum ada misi aktif saat ini.
+        </p>
+        }
+      </div>
+    </div>
+    } @else if (activeModal() === 'timeline') {
+    <div class="p-4 overflow-y-auto max-h-[80vh]">
+      <app-timeline-explorer></app-timeline-explorer>
+    </div>
+    } @else if (activeModal() === 'homology') {
+    <div class="p-4 overflow-y-auto max-h-[80vh]">
+      <app-homology-visualizer></app-homology-visualizer>
+    </div>
+    } @else {
+    <div
+      class="p-6 flex flex-col items-center justify-center text-center gap-3 opacity-60"
+    >
+      <mat-icon class="text-4xl text-zinc-600 mb-2">construction</mat-icon>
+      <p class="text-sm font-medium">
+        Modul {{ activeModal() | titlecase }} sedang dalam tahap pengembangan
+        (v1.2).<br />Guardian Engine difokuskan pada simulasi state saat
+        ini.
+      </p>
+    </div>
+    }
+    <div class="p-3 bg-zinc-950 border-t border-zinc-800 flex justify-end">
+      <button
+        (click)="closeModal()"
+        class="px-4 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-medium transition-colors"
+      >
+        Tutup
+      </button>
+    </div>
+  </div>
+</div>
+}

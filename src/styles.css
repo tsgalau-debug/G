@@ -1,0 +1,239 @@
+/* Global styles & Flat UI Color System (Midnight Blue / Wet Asphalt / Emerald / Peter River / Amethyst / Sun Flower / Alizarin / Clouds) */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import "tailwindcss";
+
+:root {
+  /* Canonical 20 Flat UI Palette Reference Tokens */
+  --flat-turquoise: #1abc9c;
+  --flat-green-sea: #16a085;
+  --flat-emerald: #2ecc71;
+  --flat-nephritis: #27ae60;
+  --flat-peter-river: #3498db;
+  --flat-belize-hole: #2980b9;
+  --flat-amethyst: #9b59b6;
+  --flat-wisteria: #8e44ad;
+  --flat-wet-asphalt: #34495e;
+  --flat-midnight-blue: #2c3e50;
+  --flat-sun-flower: #f1c40f;
+  --flat-orange: #f39c12;
+  --flat-carrot: #e67e22;
+  --flat-pumpkin: #d35400;
+  --flat-alizarin: #e74c3c;
+  --flat-pomegranate: #c0392b;
+  --flat-clouds: #ecf0f1;
+  --flat-silver: #bdc3c7;
+  --flat-concrete: #95a5a6;
+  --flat-asbestos: #7f8c8d;
+}
+
+@theme {
+  /* 60-30 Neutral & Structural Surfaces: Midnight Blue (#2c3e50), Wet Asphalt (#34495e), Asbestos (#7f8c8d), Concrete (#95a5a6), Silver (#bdc3c7), Clouds (#ecf0f1) */
+  --color-zinc-950: #1e2b37;
+  --color-zinc-900: #2c3e50;
+  --color-zinc-800: #34495e;
+  --color-zinc-700: #46607a;
+  --color-zinc-600: #62788a;
+  --color-zinc-500: #7f8c8d;
+  --color-zinc-400: #95a5a6;
+  --color-zinc-300: #bdc3c7;
+  --color-zinc-200: #dfe6e9;
+  --color-zinc-100: #ecf0f1;
+  --color-zinc-50: #f7f9fa;
+
+  --color-neutral-950: #1e2b37;
+  --color-neutral-900: #2c3e50;
+  --color-neutral-800: #34495e;
+  --color-neutral-700: #46607a;
+  --color-neutral-600: #62788a;
+  --color-neutral-500: #7f8c8d;
+  --color-neutral-400: #95a5a6;
+  --color-neutral-300: #bdc3c7;
+  --color-neutral-200: #dfe6e9;
+  --color-neutral-100: #ecf0f1;
+  --color-neutral-50: #f7f9fa;
+
+  --color-slate-950: #1e2b37;
+  --color-slate-900: #2c3e50;
+  --color-slate-800: #34495e;
+  --color-slate-700: #46607a;
+  --color-slate-600: #62788a;
+  --color-slate-500: #7f8c8d;
+  --color-slate-400: #95a5a6;
+  --color-slate-300: #bdc3c7;
+  --color-slate-200: #dfe6e9;
+  --color-slate-100: #ecf0f1;
+
+  /* EMERALD (#2ecc71) & NEPHRITIS (#27ae60) — Primary Actions, Active Tabs, Positive Status */
+  --color-emerald-200: #abebc6;
+  --color-emerald-300: #58d68d;
+  --color-emerald-400: #2ecc71;
+  --color-emerald-500: #2ecc71;
+  --color-emerald-600: #27ae60;
+  --color-emerald-700: #1e8449;
+  --color-emerald-800: #196f3d;
+  --color-emerald-900: #145a32;
+  --color-emerald-950: #0e3e23;
+
+  --color-green-300: #58d68d;
+  --color-green-400: #2ecc71;
+  --color-green-500: #2ecc71;
+  --color-green-600: #27ae60;
+  --color-green-700: #1e8449;
+  --color-green-800: #196f3d;
+  --color-green-900: #145a32;
+  --color-green-950: #0e3e23;
+
+  /* TURQUOISE (#1abc9c) & GREEN SEA (#16a085) — Secondary Accent, Timeline Branches, Exploration */
+  --color-teal-200: #a3e4d7;
+  --color-teal-300: #48c9b0;
+  --color-teal-400: #1abc9c;
+  --color-teal-500: #1abc9c;
+  --color-teal-600: #16a085;
+  --color-teal-700: #117a65;
+  --color-teal-800: #0e6251;
+  --color-teal-900: #0b4f41;
+  --color-teal-950: #07362c;
+
+  --color-cyan-200: #a3e4d7;
+  --color-cyan-300: #48c9b0;
+  --color-cyan-400: #1abc9c;
+  --color-cyan-500: #1abc9c;
+  --color-cyan-600: #16a085;
+  --color-cyan-700: #117a65;
+  --color-cyan-800: #0e6251;
+  --color-cyan-900: #0b4f41;
+  --color-cyan-950: #07362c;
+
+  /* PETER RIVER (#3498db) & BELIZE HOLE (#2980b9) — Info, SP/Mana, Knowledge Entities */
+  --color-sky-200: #aed6f1;
+  --color-sky-300: #5dade2;
+  --color-sky-400: #3498db;
+  --color-sky-500: #3498db;
+  --color-sky-600: #2980b9;
+  --color-sky-700: #21618c;
+  --color-sky-800: #1b4f72;
+  --color-sky-900: #154360;
+  --color-sky-950: #0f2f44;
+
+  --color-blue-200: #aed6f1;
+  --color-blue-300: #5dade2;
+  --color-blue-400: #3498db;
+  --color-blue-500: #3498db;
+  --color-blue-600: #2980b9;
+  --color-blue-700: #21618c;
+  --color-blue-800: #1b4f72;
+  --color-blue-900: #154360;
+  --color-blue-950: #0f2f44;
+
+  /* AMETHYST (#9b59b6) & WISTERIA (#8e44ad) — Knowledge Graph, Holographic RAG, What-If Simulation */
+  --color-purple-200: #d7bde2;
+  --color-purple-300: #af7ac5;
+  --color-purple-400: #9b59b6;
+  --color-purple-500: #9b59b6;
+  --color-purple-600: #8e44ad;
+  --color-purple-700: #76448a;
+  --color-purple-800: #633974;
+  --color-purple-900: #512e5f;
+  --color-purple-950: #351e3f;
+
+  --color-violet-200: #d7bde2;
+  --color-violet-300: #af7ac5;
+  --color-violet-400: #9b59b6;
+  --color-violet-500: #9b59b6;
+  --color-violet-600: #8e44ad;
+  --color-violet-700: #76448a;
+  --color-violet-800: #633974;
+  --color-violet-900: #512e5f;
+  --color-violet-950: #351e3f;
+
+  --color-fuchsia-200: #d7bde2;
+  --color-fuchsia-300: #af7ac5;
+  --color-fuchsia-400: #9b59b6;
+  --color-fuchsia-500: #9b59b6;
+  --color-fuchsia-600: #8e44ad;
+  --color-fuchsia-700: #76448a;
+  --color-fuchsia-800: #633974;
+  --color-fuchsia-900: #512e5f;
+  --color-fuchsia-950: #351e3f;
+
+  --color-indigo-200: #aed6f1;
+  --color-indigo-300: #5dade2;
+  --color-indigo-400: #3498db;
+  --color-indigo-500: #3498db;
+  --color-indigo-600: #2980b9;
+  --color-indigo-700: #21618c;
+  --color-indigo-800: #1b4f72;
+  --color-indigo-900: #154360;
+  --color-indigo-950: #0f2f44;
+
+  /* SUN FLOWER (#f1c40f) & ORANGE (#f39c12) — Gold, Warnings, Trunk Highlights */
+  --color-amber-200: #f9e79f;
+  --color-amber-300: #f4d03f;
+  --color-amber-400: #f1c40f;
+  --color-amber-500: #f39c12;
+  --color-amber-600: #d68910;
+  --color-amber-700: #b9770e;
+  --color-amber-800: #9c640c;
+  --color-amber-900: #7e5109;
+  --color-amber-950: #4d3105;
+
+  --color-yellow-200: #f9e79f;
+  --color-yellow-300: #f4d03f;
+  --color-yellow-400: #f1c40f;
+  --color-yellow-500: #f39c12;
+  --color-yellow-600: #d68910;
+  --color-yellow-700: #b9770e;
+  --color-yellow-800: #9c640c;
+  --color-yellow-900: #7e5109;
+  --color-yellow-950: #4d3105;
+
+  /* CARROT (#e67e22) & PUMPKIN (#d35400) — Active Quests, Medium Alert, Energy */
+  --color-orange-200: #f5cba7;
+  --color-orange-300: #eb984e;
+  --color-orange-400: #e67e22;
+  --color-orange-500: #e67e22;
+  --color-orange-600: #d35400;
+  --color-orange-700: #a04000;
+  --color-orange-800: #873600;
+  --color-orange-900: #6e2c00;
+  --color-orange-950: #471c00;
+
+  /* ALIZARIN (#e74c3c) & POMEGRANATE (#c0392b) — Combat Danger, Canon Law, Hostile Status */
+  --color-red-200: #f5b7b1;
+  --color-red-300: #ec7063;
+  --color-red-400: #e74c3c;
+  --color-red-500: #e74c3c;
+  --color-red-600: #c0392b;
+  --color-red-700: #922b21;
+  --color-red-800: #7b241c;
+  --color-red-900: #641e16;
+  --color-red-950: #42130e;
+
+  --color-rose-200: #f5b7b1;
+  --color-rose-300: #ec7063;
+  --color-rose-400: #e74c3c;
+  --color-rose-500: #e74c3c;
+  --color-rose-600: #c0392b;
+  --color-rose-700: #922b21;
+  --color-rose-800: #7b241c;
+  --color-rose-900: #641e16;
+  --color-rose-950: #42130e;
+}
+
+html {
+  font-size: 13px;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (min-width: 1280px) {
+  html {
+    font-size: 13.5px;
+  }
+}
+
+html,
+body {
+  background-color: var(--color-zinc-950);
+  color: var(--flat-clouds);
+  line-height: 1.45;
+}

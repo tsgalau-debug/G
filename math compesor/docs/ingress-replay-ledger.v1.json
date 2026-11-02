@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "schema_id": "burn-research.ingress-replay-ledger.v1",
+  "status": "implemented_node_host_durable_mode",
+  "scope": {
+    "runner": "interactive_multi_input_ingress.mjs",
+    "mode": "ed25519_host_durable",
+    "startup_arguments": ["wasm_package_dir", "host_trust_policy", "host_ledger_file", "host_subject"],
+    "host_subject_source": "trusted_runner_startup_only",
+    "initialization": "host explicitly runs init_ingress_replay_ledger.mjs once; existing files cannot be reset",
+    "json_lines_cannot_replace_subject_or_ledger": true,
+    "wasm_direct_api": "unchanged_caller_declared"
+  },
+  "proof_state": {
+    "accepted_claims": "append-only logical sequence of nonce, revision, signed-claim schema and SHA-256 records; v2 records also retain the active checkpoint digest",
+    "current_revision": "highest committed revision for exact source, host subject and slot",
+    "readiness": "WASM ingress ready plus in-session signed coverage; run and verify reread the durable record",
+    "replay_window": "at most 50000 accepted claims, retained across process restarts without eviction",
+    "execution_receipts": "optional durable host-observed WASM run records with monotonic sequence and claim-count anchors; v1 history is readable and new v2 records bind an exact multi-input ProgramBundle byte digest plus any state-bound input digests",
+    "state_handoffs": "optional content-addressed links from a parent receipt output to a later signed state claim, recorded atomically with that claim",
+    "retained_checkpoints": "private host-owned files named by committed receipt ID, containing the exact ProgramBundle bytes and manifest; restore verifies both digests against the same-subject receipt",
+    "checkpoint_restores": "durable host restore events anchor an exact receipt, manifest, checkpoint digest and execution order; descendant receipts name their immediate state parent and restore event",
+    "failure": "corrupt, missing, mismatched-subject or untrusted ledger closes execution; no automatic reset"
+  },
+  "valid_transitions": [
+    "host explicitly initializes the ledger before runner startup; missing or deleted ledger fails closed",
+    "host loads policy and ledger, validates owner, file mode, schema and exact subject",
+    "verified signed claim checks nonce and monotonic revision against the ledger",
+    "native bind succeeds before a new claim is committed; if commit fails, the bound tensor is cleared",
+    "commit obtains an exclusive filesystem lock and rechecks replay state across processes",
+    "commit writes a complete private snapshot to a new file, fsyncs, atomically renames and fsyncs the parent directory",
+    "run and verify hold the ledger lock while checking all bound claims and executing the WASM reference",
+    "state-bound v2 claims are rechecked against the active checkpoint digest inside the execution or verification critical section",
+    "durable run appends an execution receipt under the same lock before returning success",
+    "durable run fsyncs its bounded checkpoint into the private store before committing the receipt; receipt commit failure removes its new checkpoint",
+    "receipt-bound restore stages a fresh graph and manifest only after checking the retained bytes and receipt; input tensors and signed proofs must be bound again",
+    "restore commits its event under the exclusive ledger lock before replacing the live session; a failed event commit preserves the prior session",
+    "a failed run after numerical execution starts discards the current session; it cannot publish a descendant receipt from uncommitted mutable state",
+    "state bind checks exact parent receipt output bytes and atomically appends its signed claim plus a handoff record",
+    "later execution receipt input records reference the handoff ID; each subject/source/logical-port/branch lane must advance parent receipt sequence",
+    "clear removes session coverage but never erases durable nonce or revision history"
+  ],
+  "limits": [
+    "Ledger storage is a host trust root; a privileged writer can rewrite its history because the file is not independently authenticated.",
+    "The ledger parent must be host-owned and not group/world writable, and the ledger file must be private to the runner user.",
+    "A process crash may leave a lock directory; only an operator who has verified no runner owns it may recover it.",
+    "50,000 accepted claims or a 32 MiB ledger file fails closed rather than silently discarding replay history.",
+    "50,000 execution receipts or 50,000 state handoffs fail closed; pre-receipt ledger snapshots remain readable without resetting claim history.",
+    "Retained ProgramBundle bytes are limited to 8 MiB per receipt and 512 MiB per store; a crash can leave an unreferenced checkpoint requiring host cleanup.",
+    "Older v2 receipts without retained checkpoint files remain readable but cannot be restored.",
+    "Older receipts without a state-parent or restore event remain readable; their absent ancestry is never inferred.",
+    "At most 50,000 restore events may be recorded; their record bytes count toward the ledger size cap.",
+    "The JSON snapshot is rewritten for each commit; this is a reference-machine persistence contract, not a high-throughput database.",
+    "Signing verifies the configured issuer's claim, not the truth of an external observation; direct WASM callers bypass the Node host gate.",
+    "A v2 checkpoint digest binds exact serialized bytes and state freshness; it does not authenticate state origin or authorize actions."
+  ]
+}

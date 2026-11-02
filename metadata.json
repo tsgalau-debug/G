@@ -1,0 +1,8 @@
+{
+  "name": "Agentic RAG Lore Engine Sandbox",
+  "description": "Zoneless Angular 21 application running game simulation with Agentic RAG Pipeline, holographic memory, VSA-RL Policy Kernel, and Topological State Sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

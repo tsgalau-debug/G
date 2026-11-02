@@ -1,0 +1,201 @@
+<div class="flex h-screen w-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden relative flex-col">
+  <!-- UNIFIED TOP LINE BAR (Single-Elevation Minimalist Line UI) -->
+  <header class="h-10 border-b border-zinc-800/80 flex items-center justify-between px-3 sm:px-5 bg-zinc-950 shrink-0 z-20 gap-4">
+    <!-- Left Zone: Story Switcher & Inline World Status (Day · Time · Location) -->
+    <div class="flex items-center gap-3 min-w-0 shrink">
+      <button 
+        id="btn-open-story-manager"
+        (click)="openStoryManager()" 
+        title="Pilih atau Buat Cerita Baru"
+        class="group flex items-center gap-2 text-left py-1 text-zinc-100 hover:text-emerald-400 transition-colors min-w-0">
+        <mat-icon class="text-[15px] w-[15px] h-[15px] text-emerald-400 shrink-0">auto_stories</mat-icon>
+        <span class="font-semibold text-xs tracking-tight truncate max-w-[160px] sm:max-w-[260px]">
+          {{ gameState.activeStory()?.title || 'Pilih Cerita' }}
+        </span>
+        <mat-icon class="text-[14px] w-[14px] h-[14px] text-zinc-500 group-hover:text-emerald-400 transition-colors shrink-0">expand_more</mat-icon>
+      </button>
+
+      <span class="text-zinc-800 hidden md:inline select-none" aria-hidden="true">|</span>
+
+      <!-- Inline Unboxed Metadata: Protagonist · Day · Time · Location -->
+      <div class="hidden md:flex items-center gap-2 text-[11px] text-zinc-400 font-mono tabular-nums truncate">
+        <span class="text-zinc-200 font-sans font-medium truncate max-w-[150px]">{{ gameState.mcState.name }}</span>
+        <span class="text-zinc-700" aria-hidden="true">·</span>
+        <span>Hari {{ gameState.mcState.day || 1 }}</span>
+        <span class="text-zinc-700" aria-hidden="true">·</span>
+        <span class="text-emerald-400/90">{{ gameState.mcState.time || '08:00' }}</span>
+        <span class="text-zinc-700" aria-hidden="true">·</span>
+        <span class="text-zinc-300 font-sans truncate max-w-[240px]" [title]="gameState.mcState.locationName || gameState.mcState.location">
+          {{ gameState.mcState.locationName || gameState.mcState.location || 'Titik Awal' }}
+        </span>
+        @if (gameState.activeTimelineId() !== 'trunk') {
+          <span class="text-zinc-700" aria-hidden="true">·</span>
+          <button
+            type="button"
+            (click)="activeTab = 'timeline'"
+            title="Sedang berada di cabang garis waktu paralel"
+            class="text-purple-400 hover:text-purple-300 flex items-center gap-1 font-sans font-medium cursor-pointer"
+          >
+            <mat-icon class="!w-3 !h-3 !text-[12px]">call_split</mat-icon>
+            <span>Cabang Paralel</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Center Zone: Minimalist Line Tabs (Desktop & Tablet) -->
+    <nav class="hidden sm:flex items-center h-full gap-1 lg:gap-2 overflow-x-auto no-scrollbar shrink-0" aria-label="Navigasi Utama">
+      <button 
+        id="tab-story"
+        (click)="activeTab = 'story'" 
+        [class.border-emerald-500]="activeTab === 'story'"
+        [class.text-zinc-100]="activeTab === 'story'"
+        [class.border-transparent]="activeTab !== 'story'"
+        [class.text-zinc-500]="activeTab !== 'story'"
+        class="h-full px-2.5 border-b-2 text-xs font-medium tracking-tight transition-colors flex items-center gap-1.5 hover:text-zinc-200 whitespace-nowrap shrink-0">
+        <mat-icon class="text-[15px] w-[15px] h-[15px]">menu_book</mat-icon>
+        <span>Chronicle</span>
+      </button>
+      <button 
+        id="tab-character"
+        (click)="activeTab = 'character'" 
+        [class.border-emerald-500]="activeTab === 'character'"
+        [class.text-zinc-100]="activeTab === 'character'"
+        [class.border-transparent]="activeTab !== 'character'"
+        [class.text-zinc-500]="activeTab !== 'character'"
+        class="h-full px-2.5 border-b-2 text-xs font-medium tracking-tight transition-colors flex items-center gap-1.5 hover:text-zinc-200 whitespace-nowrap shrink-0">
+        <mat-icon class="text-[15px] w-[15px] h-[15px]">person</mat-icon>
+        <span>Karakter</span>
+      </button>
+      <button 
+        id="tab-map"
+        (click)="activeTab = 'map'" 
+        [class.border-emerald-500]="activeTab === 'map'"
+        [class.text-zinc-100]="activeTab === 'map'"
+        [class.border-transparent]="activeTab !== 'map'"
+        [class.text-zinc-500]="activeTab !== 'map'"
+        class="h-full px-2.5 border-b-2 text-xs font-medium tracking-tight transition-colors flex items-center gap-1.5 hover:text-zinc-200 whitespace-nowrap shrink-0">
+        <mat-icon class="text-[15px] w-[15px] h-[15px]">explore</mat-icon>
+        <span>Dunia & NPC</span>
+      </button>
+      <button 
+        id="tab-log"
+        (click)="activeTab = 'log'" 
+        [class.border-emerald-500]="activeTab === 'log'"
+        [class.text-zinc-100]="activeTab === 'log'"
+        [class.border-transparent]="activeTab !== 'log'"
+        [class.text-zinc-500]="activeTab !== 'log'"
+        class="h-full px-2.5 border-b-2 text-xs font-medium tracking-tight transition-colors flex items-center gap-1.5 hover:text-zinc-200 whitespace-nowrap shrink-0">
+        <mat-icon class="text-[15px] w-[15px] h-[15px]">terminal</mat-icon>
+        <span>Log</span>
+      </button>
+      <button 
+        id="tab-diagnostics"
+        (click)="activeTab = 'diagnostics'" 
+        [class.border-emerald-500]="activeTab === 'diagnostics'"
+        [class.text-zinc-100]="activeTab === 'diagnostics'"
+        [class.border-transparent]="activeTab !== 'diagnostics'"
+        [class.text-zinc-500]="activeTab !== 'diagnostics'"
+        class="h-full px-2.5 border-b-2 text-xs font-medium tracking-tight transition-colors flex items-center gap-1.5 hover:text-zinc-200 whitespace-nowrap shrink-0">
+        <mat-icon class="text-[15px] w-[15px] h-[15px]">memory</mat-icon>
+        <span>RAG</span>
+      </button>
+    </nav>
+
+    <!-- Right Zone: System Modal Trigger & Mobile Compact Nav -->
+    <div class="flex items-center gap-2 shrink-0">
+      <!-- Mobile Inline Tab Strip (Compact Icon-First Line Buttons) -->
+      <div class="flex sm:hidden items-center gap-0.5 mr-1">
+        <button 
+          (click)="activeTab = 'story'" 
+          [class.text-emerald-400]="activeTab === 'story'"
+          [class.text-zinc-500]="activeTab !== 'story'"
+          title="Chronicle"
+          class="p-1.5 transition-colors">
+          <mat-icon class="text-[17px] w-[17px] h-[17px]">menu_book</mat-icon>
+        </button>
+        <button 
+          (click)="activeTab = 'character'" 
+          [class.text-emerald-400]="activeTab === 'character'"
+          [class.text-zinc-500]="activeTab !== 'character'"
+          title="Karakter"
+          class="p-1.5 transition-colors">
+          <mat-icon class="text-[17px] w-[17px] h-[17px]">person</mat-icon>
+        </button>
+        <button 
+          (click)="activeTab = 'map'" 
+          [class.text-emerald-400]="activeTab === 'map'"
+          [class.text-zinc-500]="activeTab !== 'map'"
+          title="Dunia & NPC"
+          class="p-1.5 transition-colors">
+          <mat-icon class="text-[17px] w-[17px] h-[17px]">explore</mat-icon>
+        </button>
+        <button 
+          (click)="activeTab = 'log'" 
+          [class.text-emerald-400]="activeTab === 'log'"
+          [class.text-zinc-500]="activeTab !== 'log'"
+          title="Log"
+          class="p-1.5 transition-colors">
+          <mat-icon class="text-[17px] w-[17px] h-[17px]">terminal</mat-icon>
+        </button>
+        <button 
+          (click)="activeTab = 'diagnostics'" 
+          [class.text-emerald-400]="activeTab === 'diagnostics'"
+          [class.text-zinc-500]="activeTab !== 'diagnostics'"
+          title="RAG"
+          class="p-1.5 transition-colors">
+          <mat-icon class="text-[17px] w-[17px] h-[17px]">memory</mat-icon>
+        </button>
+      </div>
+
+      <button 
+        id="btn-open-system-modal"
+        (click)="openModal('settings')" 
+        aria-label="Buka Pengaturan Sistem"
+        class="text-zinc-400 hover:text-zinc-100 text-xs font-medium py-1.5 px-2.5 border-l border-zinc-800/80 transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0">
+        <mat-icon class="text-[15px] w-[15px] h-[15px]">tune</mat-icon>
+        <span class="hidden lg:inline">Sistem</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Viewport -->
+  <div class="flex-1 flex overflow-hidden relative">
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+      <div [class.hidden]="activeTab !== 'story'" class="flex-1 h-full overflow-hidden">
+        <app-story></app-story>
+      </div>
+      @if (activeTab === 'character') {
+        <div class="flex-1 h-full overflow-hidden">
+          <app-character></app-character>
+        </div>
+      }
+      @if (activeTab === 'map') {
+        <div class="flex-1 h-full overflow-hidden">
+          <app-npc-map></app-npc-map>
+        </div>
+      }
+      @if (activeTab === 'log') {
+        <div class="flex-1 h-full overflow-hidden">
+          <app-engine-log></app-engine-log>
+        </div>
+      }
+      @if (activeTab === 'diagnostics') {
+        <div class="flex-1 h-full overflow-hidden">
+          <app-rag-diagnostics></app-rag-diagnostics>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Story Manager Modal -->
+  @if (showStoryManager) {
+    <app-story-manager (close)="closeStoryManager()"></app-story-manager>
+  }
+
+  <!-- System Modal Component -->
+  <app-system-modal 
+    [activeModal]="activeModal" 
+    (close)="closeModal()">
+  </app-system-modal>
+</div>
