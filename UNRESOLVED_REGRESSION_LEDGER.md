@@ -73,6 +73,9 @@ Keep this table concise. Put full investigation details in the individual entrie
 | REG-20261024-013 | `knowledgeWeights` omitted from `TimelineBranchSnapshot`/`TimelineAncestorSnapshot` (branch leak & 3-way merge loss), uncleaned `knowledgeWeights` on `resetCurrentStory()`, missing `knowledgeWeights` in `LoreEngineService` cache hash & worker hydration, and missing `stateVersion` bumps on `addItem`/`updateQuests`/`updateCombat`/`updateStorySummary` | RESOLVED | Medium | `src/app/game-state.types.ts`, `src/app/game-state/timeline-branch-reconciler.ts`, `src/app/game-state.service.ts`, `src/app/rag/lore-engine.service.ts`, `src/app/rag/lore-engine.worker.ts` | 2026-10-24 | Verified via `REG-20261024-013` in `timeline-multiworld-p0.spec.ts` |
 | REG-20261026-014 | Unrequested removal of `gemini-3.5-flash-lite` (15 RPM / 500 RPD) and premature default switch to `gemini-3.8-flash` (5 RPM / 20 RPD Free-tier limit) | RESOLVED | High | `src/app/game-state/game-database.ts`, `src/app/game-state.service.ts`, `src/app/game-state/session-storage-coordinator.ts`, `src/app/game-state/story-session-factory.ts`, `src/app/system-modal.html`, `src/server.ts` | 2026-10-26 | Enforced via `REG-20261026-014` in `world-genesis.spec.ts` |
 | REG-20261028-015 | `HolographicMemoryField.rehearsed` (`Uint8Array`) upper byte-padding bits (`0xFE`) truthiness leak, un-cleared rehearsal byte on `encode(docId, vec, 0)` eviction, and `MultiWorldHologram` `fork()`/`prune()` rehearsal state leak | RESOLVED | Medium | `src/app/rag/holographic-memory.ts`, `src/app/rag/multi-world.ts`, `src/tests/rag/holographic-memory.spec.ts` | 2026-10-28 | Enforced via `REG-20261028-015` in `holographic-memory.spec.ts` & `multi-world.spec.ts` |
+| REG-20261028-016 | `HolographicMemoryField` differential accuracy & multi-world isolation verification (`PerspectiveVerificationHarness`) | RESOLVED | Medium | `src/app/rag/holographic-memory.ts`, `src/app/rag/multi-world.ts` | 2026-10-28 | Verified via `wasm-math-v9-scorer.spec.ts` & `multi-world.spec.ts` |
+| REG-20261028-017 | `WasmMathProgramV9BatchScorer` zero-norm (`||v|| = 0`), `NaN` propagation, and misaligned/undersized `Float32Array` view trap in `WasmTensor` | RESOLVED | High | `src/app/rag/wasm-math-v9-scorer.ts`, `src/tests/rag/wasm-math-v9-scorer.spec.ts` | 2026-10-28 | Verified via `wasm-math-v9-scorer.spec.ts` |
+| REG-20261111-018 | PLW CLI v0.2.5 audit findings: `RetrievalPipeline.build()` 30s SimHash zero-vector bottleneck (`4096 * 1024 * 768` ops per `rebuildCSR()`), `epistemic-retrieval-kernel.ts <-> holographic-memory.ts` circular dependency, sequential `await` in loops, and `new Function` deopt | RESOLVED | High | `src/app/rag/hybrid-pipeline.ts`, `src/app/rag/epistemic-retrieval-kernel.ts`, `rag-topology-standalone/**`, `vitest.config.ts` | 2026-11-11 | Verified via `rag-topology-standalone/tests/standalone-rag-topology.spec.ts` (232ms) & `plw check rag-topology-standalone --json` (`high: 0`) |
 
 ---
 
@@ -502,6 +505,38 @@ During the API connection audit, `gemini-3.5-flash-lite` was removed from `VALID
   3. Created `createWasmMathV9BatchScorerVerificationSuite(rt)` in `src/tests/rag/wasm-math-v9-perspective-suite.ts` and verified all 4 gates in `src/tests/rag/perspective-verification-harness.spec.ts`.
 - **Regression test/case ID:** `REG-20261028-017-ZERO-NORM-AND-MISALIGNED-TENSOR` in `src/tests/rag/wasm-math-v9-perspective-suite.ts`.
 - **Added to verifier / CI / next-version suite:** Yes (`npm test`).
+
+---
+
+### [REG-20261111-018] PLW CLI v0.2.5 Audit Findings & `RetrievalPipeline.build()` SimHash Zero-Vector Bottleneck
+
+- **Status:** RESOLVED
+- **First observed:** 2026-11-11
+- **Last updated:** 2026-11-11
+- **Severity:** High
+- **Confidence:** Confirmed
+- **Area / components:** `src/app/rag/hybrid-pipeline.ts`, `src/app/rag/epistemic-retrieval-kernel.ts`, `rag-topology-standalone/rag/hybrid-pipeline.ts`, `rag-topology-standalone/rag/epistemic-retrieval-kernel.ts`, `rag-topology-standalone/rag/rag-engine.ts`, `rag-topology-standalone/rag/wasm-math-v9-scorer.ts`, `rag-topology-standalone/tests/standalone-rag-topology.spec.ts`
+- **Introduced by / version:** `RetrievalPipeline.build()` unguarded full-slot (`numDocs = 4096`) SimHash projection and bidirectional import between `epistemic-retrieval-kernel.ts` and `holographic-memory.ts`
+
+#### 1. Expected behavior
+1. `plw check rag-topology-standalone --json` must report `high: 0` across all 13 analyzers (`topo.circular`, `topo.test_reachability`, `perf.async`, `perf.deopt`, etc.).
+2. `RetrievalPipeline.build()` (called on every `rebuildCSR()` / `addDocument()`) must skip unpopulated zero-vector slots in `docVectors` rather than computing `1024 * 768` SimHash dot products across all `4096` slots.
+
+#### 2. Observed behavior
+1. `plw check rag-topology-standalone --json` initially detected 5 High-Severity findings:
+   - `topo.circular`: Bidirectional import between `epistemic-retrieval-kernel.ts` and `holographic-memory.ts`.
+   - `perf.async`: Sequential `await` inside loops in `EmbeddingFreeRagEngine.init()` and `syncKnowledgeGraph()`.
+   - `perf.deopt`: Dynamic `new Function('u', 'return import(u)')` in `wasm-math-v9-scorer.ts`.
+   - `topo.test_reachability`: Missing standalone test file in `rag-topology-standalone/`.
+2. Running `rag-topology-standalone/tests/standalone-rag-topology.spec.ts` timed out at `30,183ms` because `RetrievalPipeline.build()` executed `4096 * 1024 * 768 = 3,221,225,472` inner-loop operations per `rebuildCSR()` call even when only 2–4 documents were populated.
+
+#### 3. Mitigation and regression protection
+- **Mitigation implemented:**
+  1. Added a fast `isNonZero` check per document slot in `RetrievalPipeline.build()` in both `src/app/rag/hybrid-pipeline.ts` and `rag-topology-standalone/rag/hybrid-pipeline.ts`, reducing `standalone-rag-topology.spec.ts` execution time from `30,183ms` to **`232ms`** (~130x speedup).
+  2. Replaced the `HolographicMemoryField` import in `src/app/rag/epistemic-retrieval-kernel.ts` and `rag-topology-standalone/rag/epistemic-retrieval-kernel.ts` with the structural interface `HolographicFieldLike`, eliminating the circular dependency.
+  3. Replaced sequential `await` in loops in `rag-topology-standalone/rag/rag-engine.ts` with `await Promise.all(...)` and replaced `new Function` in `rag-topology-standalone/rag/wasm-math-v9-scorer.ts` with `import(/* @vite-ignore */ jsUrl)`.
+- **Regression test/case ID:** `rag-topology-standalone/tests/standalone-rag-topology.spec.ts` (3 tests passing in 232ms).
+- **Added to verifier / CI / next-version suite:** Yes (`vitest.config.ts` and `plw check rag-topology-standalone --json`).
 
 ---
 

@@ -242,6 +242,15 @@ export class RetrievalPipeline {
 
     for (let d = 0; d < this.numDocs; d++) {
       const dOff = d * this.dim;
+      let isNonZero = false;
+      for (let j = 0; j < this.dim; j++) {
+        if (docFHRR[dOff + j] !== 0) {
+          isNonZero = true;
+          break;
+        }
+      }
+      if (!isNonZero) continue;
+
       const hOff = d * this.words;
       for (let b = 0; b < this.numBits; b++) {
         let dot = 0;

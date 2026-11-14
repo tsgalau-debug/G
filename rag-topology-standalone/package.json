@@ -1,0 +1,29 @@
+{
+  "name": "rag-topology-standalone",
+  "version": "1.0.0",
+  "description": "Standalone Embedding-Free Holographic RAG, VSA-RL & Simplicial Topology Research Engine",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./rag/*": "./rag/*.ts",
+    "./topology/*": "./topology/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "rag",
+    "embedding-free",
+    "holographic-memory",
+    "vsa",
+    "hrr",
+    "bm25",
+    "wand",
+    "simhash",
+    "simplicial-homology",
+    "betti-numbers",
+    "contextual-bandit"
+  ],
+  "license": "MIT"
+}

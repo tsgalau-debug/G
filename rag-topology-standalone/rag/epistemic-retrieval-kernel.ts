@@ -1,0 +1,167 @@
+export interface HolographicFieldLike {
+  readonly tempVec: Float32Array;
+  reconstruct(query: Float32Array, out: Float32Array): number;
+  measureUncertainty(
+    scores: Float32Array,
+    count: number
+  ): { entropy: number; gini: number; coherence: number; confident: boolean };
+  expansionGradient(query: Float32Array, out: Float32Array): number;
+  checkAnomaly(stateVector: Float32Array): {
+    isAnomaly: boolean;
+    coherence: number;
+    severity: 'none' | 'mild' | 'critical';
+    suggestion: string;
+  };
+  getRollingCoherence(): number;
+}
+
+export interface RetrievalDecision {
+  chunks: { index: number; score: number; text?: string }[];
+  confidence: number;
+  useLLM: boolean;
+  reason: string;
+  expansionVector?: Float32Array;
+}
+
+export type EpistemicKernelResult = RetrievalDecision;
+
+export class EpistemicRetrievalKernel {
+  readonly pipeline: any;
+  hologram: HolographicFieldLike;
+  readonly dim: number;
+
+  readonly outIndices: Int32Array;
+  readonly outScores: Float32Array;
+  readonly qTerms: Int32Array;
+  readonly qIDF: Float32Array;
+  readonly qFHRR: Float32Array;
+
+  constructor(
+    pipeline: any,
+    hologram: HolographicFieldLike,
+    dim: number,
+    kFinal = 10
+  ) {
+    this.pipeline = pipeline;
+    this.hologram = hologram;
+    this.dim = dim;
+    this.outIndices = new Int32Array(kFinal);
+    this.outScores = new Float32Array(kFinal);
+    this.qTerms = new Int32Array(64);
+    this.qIDF = new Float32Array(64);
+    this.qFHRR = new Float32Array(dim);
+  }
+
+  setActiveHologram(hologram: HolographicFieldLike): void {
+    this.hologram = hologram;
+  }
+
+  retrieve(
+    qTerms: Int32Array,
+    qIDF: Float32Array,
+    queryFHRR: Float32Array,
+    nq = 32
+  ): RetrievalDecision {
+    nq = Math.min(nq, qTerms.length, qIDF.length);
+    for (let i = 0; i < nq; i++) {
+      this.qTerms[i] = qTerms[i]!;
+      this.qIDF[i] = qIDF[i]!;
+    }
+    this.qFHRR.set(queryFHRR);
+
+    const preCoherence = this.hologram.reconstruct(
+      queryFHRR,
+      this.hologram.tempVec
+    );
+
+    this.pipeline.query(
+      this.qTerms.subarray(0, nq),
+      this.qIDF.subarray(0, nq),
+      this.qFHRR,
+      nq,
+      this.outIndices,
+      this.outScores,
+      { expand: preCoherence < 0.4, wBm25: 0.6, wSim: 0.4 }
+    );
+
+    let validCount = 0;
+    while (validCount < this.outIndices.length && this.outScores[validCount] !== -Infinity) {
+      validCount++;
+    }
+
+    const uncertainty = this.hologram.measureUncertainty(
+      this.outScores.subarray(0, validCount),
+      validCount
+    );
+
+    const chunks: RetrievalDecision['chunks'] = [];
+    for (let i = 0; i < this.outIndices.length; i++) {
+      if (this.outScores[i] === -Infinity) break;
+      chunks.push({ index: this.outIndices[i], score: this.outScores[i] });
+    }
+
+    if (uncertainty.confident && preCoherence > 0.3) {
+      return {
+        chunks,
+        confidence: uncertainty.coherence,
+        useLLM: false,
+        reason: `High coherence (${uncertainty.coherence.toFixed(2)}), low entropy (${uncertainty.entropy.toFixed(2)}). Kernel retrieval sufficient.`,
+      };
+    } else if (uncertainty.confident && preCoherence <= 0.3) {
+      return {
+        chunks,
+        confidence: uncertainty.coherence * 0.7,
+        useLLM: true,
+        reason: `Retrieval confident but query is novel/anomalous (coherence ${preCoherence.toFixed(2)}). External reasoning suggested.`,
+      };
+    } else {
+      const grad = new Float32Array(this.dim);
+      this.hologram.expansionGradient(queryFHRR, grad);
+
+      return {
+        chunks,
+        confidence: uncertainty.coherence,
+        useLLM: true,
+        reason: `High entropy (${uncertainty.entropy.toFixed(2)}) — retrieval ambiguous. Suggest query expansion.`,
+        expansionVector: grad,
+      };
+    }
+  }
+
+  validateStateVector(stateVector: Float32Array): {
+    valid: boolean;
+    coherence: number;
+    action: 'allow' | 'warn' | 'block' | 'retcon';
+    suggestion: string;
+  } {
+    const anomaly = this.hologram.checkAnomaly(stateVector);
+
+    if (!anomaly.isAnomaly) {
+      return {
+        valid: true,
+        coherence: anomaly.coherence,
+        action: 'allow',
+        suggestion: anomaly.suggestion,
+      };
+    }
+
+    const rolling = this.hologram.getRollingCoherence();
+    const action =
+      anomaly.severity === 'critical' && rolling < 0.4
+        ? 'retcon'
+        : anomaly.severity === 'critical'
+          ? 'block'
+          : 'warn';
+
+    return {
+      valid: false,
+      coherence: anomaly.coherence,
+      action,
+      suggestion: anomaly.suggestion,
+    };
+  }
+
+  validateNPCState(npcStateVector: Float32Array) {
+    return this.validateStateVector(npcStateVector);
+  }
+}

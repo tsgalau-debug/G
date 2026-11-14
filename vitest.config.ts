@@ -14,7 +14,7 @@ export default defineConfig({
       },
     },
     globals: false,
-    include: ['src/**/*.spec.ts'],
+    include: ['src/**/*.spec.ts', 'rag-topology-standalone/**/*.spec.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -1,5 +1,20 @@
 /* eslint-disable import/no-cycle */
-import type { HolographicMemoryField } from './holographic-memory';
+export interface HolographicFieldLike {
+  readonly tempVec: Float32Array;
+  reconstruct(query: Float32Array, out: Float32Array): number;
+  measureUncertainty(
+    scores: Float32Array,
+    count: number,
+  ): { entropy: number; gini: number; coherence: number; confident: boolean };
+  expansionGradient(query: Float32Array, out: Float32Array): number;
+  checkAnomaly(stateVector: Float32Array): {
+    isAnomaly: boolean;
+    coherence: number;
+    severity: "none" | "mild" | "critical";
+    suggestion: string;
+  };
+  getRollingCoherence(): number;
+}
 
 export interface RetrievalDecision {
   chunks: { index: number; score: number; text?: string }[];
@@ -14,7 +29,7 @@ export type EpistemicKernelResult = RetrievalDecision;
 export class EpistemicRetrievalKernel {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly pipeline: any;
-  hologram: HolographicMemoryField;
+  hologram: HolographicFieldLike;
   readonly dim: number;
 
   readonly outIndices: Int32Array;
@@ -26,7 +41,7 @@ export class EpistemicRetrievalKernel {
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pipeline: any,
-    hologram: HolographicMemoryField,
+    hologram: HolographicFieldLike,
     dim: number,
     kFinal = 10,
   ) {
@@ -41,7 +56,7 @@ export class EpistemicRetrievalKernel {
     this.qFHRR = new Float32Array(dim);
   }
 
-  setActiveHologram(hologram: HolographicMemoryField): void {
+  setActiveHologram(hologram: HolographicFieldLike): void {
     this.hologram = hologram;
   }
 
